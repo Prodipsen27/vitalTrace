@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { supabaseBrowser } from "@/lib/supabase/client";
 import {
   ArrowLeft,
   Copy,
@@ -253,7 +254,12 @@ export default function ReportPage() {
         success: "PDF downloaded successfully!",
         error: "Failed to download PDF.",
       }
-    );
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabaseBrowser.auth.signOut();
+    router.push("/login");
   };
 
   return (
@@ -273,9 +279,18 @@ export default function ReportPage() {
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             Analysis History
           </Link>
-          <div className="text-xs text-zinc-500 flex items-center gap-1.5">
-            <FileText className="w-3.5 h-3.5" />
-            <span className="font-mono">{report.fileName || "extracted_report.pdf"}</span>
+          <div className="flex items-center gap-4">
+            <div className="text-xs text-zinc-500 flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5" />
+              <span className="font-mono">{report.fileName || "extracted_report.pdf"}</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-xs font-bold uppercase tracking-wider text-red-400 hover:text-red-300 transition-colors border border-red-500/20 bg-red-500/5 px-4 py-2 rounded-full"
+            >
+              Log Out
+            </button>
           </div>
         </div>
 

@@ -162,6 +162,11 @@ export default function UploadPage() {
     }
   };
 
+  const handleLogout = async () => {
+    await supabaseBrowser.auth.signOut();
+    router.push("/login");
+  };
+
   return (
     <main className="min-h-screen bg-[#080c0a] text-zinc-100 py-12 px-6 relative">
       {/* Noise background */}
@@ -177,12 +182,21 @@ export default function UploadPage() {
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             Back to Home
           </Link>
-          <Link
-            href="/history"
-            className="text-xs font-bold uppercase tracking-wider text-zinc-400 hover:text-[#3ddc84] transition-colors border border-[#2d4a3b]/40 bg-[#1a2a22]/10 px-4 py-2 rounded-full hover:border-[#3ddc84]/40"
-          >
-            View History
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/history"
+              className="text-xs font-bold uppercase tracking-wider text-zinc-400 hover:text-[#3ddc84] transition-colors border border-[#2d4a3b]/40 bg-[#1a2a22]/10 px-4 py-2 rounded-full hover:border-[#3ddc84]/40"
+            >
+              View History
+            </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-xs font-bold uppercase tracking-wider text-red-400 hover:text-red-300 transition-colors border border-red-500/20 bg-red-500/5 px-4 py-2 rounded-full"
+            >
+              Log Out
+            </button>
+          </div>
         </div>
 
         {/* Title */}

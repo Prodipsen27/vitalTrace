@@ -6,8 +6,10 @@ import { ArrowLeft, Plus, History, Inbox, Database } from "lucide-react";
 import { motion } from "framer-motion";
 import ReportCard from "@/components/ReportCard";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function HistoryPage() {
+  const router = useRouter();
   const [reports, setReports] = useState<any[]>([]);
 
   useEffect(() => {
@@ -38,6 +40,11 @@ export default function HistoryPage() {
       localStorage.removeItem("vitaltrace_reports");
       setReports([]);
     }
+  };
+
+  const handleLogout = async () => {
+    await supabaseBrowser.auth.signOut();
+    router.push("/login");
   };
 
   return (
@@ -73,6 +80,13 @@ export default function HistoryPage() {
               <Plus className="w-3.5 h-3.5" />
               New Analysis
             </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-xs font-bold uppercase tracking-wider text-red-400 hover:text-red-300 transition-colors border border-red-500/20 bg-red-500/5 px-4 py-2 rounded-full"
+            >
+              Log Out
+            </button>
           </div>
         </div>
 
