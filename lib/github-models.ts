@@ -7,9 +7,10 @@ export const githubClient = new OpenAI({
   apiKey: process.env.GITHUB_TOKEN!,
 });
 
-// Models available to us for free
+// Models available to us for free - mapped per-agent to bypass the 1req/60s rate limit on any single model
 export const MODELS = {
-  SMART: "DeepSeek-V3-0324",              // Best quality — use for agents
-  FAST: "gpt-4o-mini",          // Faster + cheaper — use for simple tasks
-  EMBED: "text-embedding-3-small", // For RAG embeddings
+  EXTRACTOR: "gpt-4o-mini",        // High limits, fast, excellent at structured data extraction
+  ANALYZER: "DeepSeek-V3-0324",     // Detailed clinical reasoning and diagnostics
+  PATTERN: "gpt-4o",               // Excellent tool-use capability for history trend mapping
+  EMBED: "text-embedding-3-small",  // For RAG embeddings
 } as const;

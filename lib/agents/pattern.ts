@@ -130,7 +130,7 @@ Please identify the trend and call analyze_trends.`
     console.log(`🔄 [PatternAgent] Loop iteration ${iterations}`);
 
     const response = await githubClient.chat.completions.create({
-      model: MODELS.SMART,
+      model: MODELS.PATTERN,
       messages,
       tools: [TREND_TOOL],
       tool_choice: "required",

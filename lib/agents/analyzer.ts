@@ -188,7 +188,7 @@ First call analyze_findings, then call generate_lifestyle_recommendations.`,
     console.log(`🔄 [AnalyzerAgent] Iteration ${iterations}, tools done: ${toolsCompleted}/2`);
 
     const response = await githubClient.chat.completions.create({
-      model: MODELS.SMART,
+      model: MODELS.ANALYZER,
       messages,
       tools: [ANALYZE_TOOL, LIFESTYLE_TOOL],
       // "auto" = LLM decides which tool to call and when

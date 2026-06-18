@@ -112,7 +112,7 @@ Always call the extract_biomarkers tool with your findings.`,
     console.log(`🔄 [ExtractorAgent] Loop iteration ${iterations}`);
 
     const response = await githubClient.chat.completions.create({
-      model: MODELS.SMART,
+      model: MODELS.EXTRACTOR,
       messages,
       tools: [EXTRACT_TOOL],
       tool_choice: "required", // Force the LLM to use a tool — no free text
