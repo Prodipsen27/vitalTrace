@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error("[API Error]");
-    return NextResponse.json({ error: "Internal processing error" }, { status: 500 });
+    console.error("[API Error]", error);
+    return NextResponse.json({ error: error.message || error }, { status: 500 });
   }
 }
