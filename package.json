@@ -9,18 +9,41 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@langchain/community": "^1.1.29",
+    "@langchain/core": "^1.1.48",
+    "@supabase/auth-ui-react": "^0.4.7",
+    "@supabase/auth-ui-shared": "^0.1.8",
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.107.0",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.40.0",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^1.17.0",
+    "next": "14.2.35",
+    "openai": "^6.42.0",
+    "pdf-parse": "^2.4.5",
     "react": "^18",
     "react-dom": "^18",
-    "next": "14.2.35"
+    "react-dropzone": "^15.0.0",
+    "react-hot-toast": "^2.6.0",
+    "recharts": "^3.8.1",
+    "resend": "^6.12.4",
+    "tailwind-merge": "^3.6.0",
+    "uuid": "^14.0.0",
+     "@azure-rest/ai-inference": "latest",
+    "@azure/core-auth": "latest",
+    "@azure/core-sse": "latest"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/uuid": "^10.0.0",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.35",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.35"
+    "typescript": "^5"
   }
 }
