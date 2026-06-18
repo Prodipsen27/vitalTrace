@@ -9,6 +9,18 @@ import { AgentState } from "@/types";
 // pdf-parse uses traditional commonjs require
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
+
+// Polyfill browser globals that pdf-parse's internal pdfjs-dist requires at load time in serverless Node environments
+if (typeof globalThis.DOMMatrix === "undefined") {
+  (globalThis as any).DOMMatrix = class DOMMatrix {};
+}
+if (typeof globalThis.ImageData === "undefined") {
+  (globalThis as any).ImageData = class ImageData {};
+}
+if (typeof globalThis.Path2D === "undefined") {
+  (globalThis as any).Path2D = class Path2D {};
+}
+
 const { PDFParse } = require("pdf-parse");
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit
