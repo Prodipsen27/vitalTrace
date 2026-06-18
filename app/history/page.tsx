@@ -5,17 +5,28 @@ import Link from "next/link";
 import { ArrowLeft, Plus, History, Inbox, Database } from "lucide-react";
 import { motion } from "framer-motion";
 import ReportCard from "@/components/ReportCard";
+import { supabaseBrowser } from "@/lib/supabase/client";
 
 export default function HistoryPage() {
   const [reports, setReports] = useState<any[]>([]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const data = localStorage.getItem("vitaltrace_reports");
-      if (data) {
-        setReports(JSON.parse(data));
+    const fetchHistory = async () => {
+      const { data: { user } } = await supabaseBrowser.auth.getUser();
+      if (typeof window !== "undefined") {
+        const data = localStorage.getItem("vitaltrace_reports");
+        if (data) {
+          const parsed = JSON.parse(data);
+          if (user) {
+            // Filter by patientId (if present) to show only current user's reports
+            setReports(parsed.filter((r: any) => !r.patientId || r.patientId === user.id));
+          } else {
+            setReports(parsed);
+          }
+        }
       }
-    }
+    };
+    fetchHistory();
   }, []);
 
   const clearHistory = () => {

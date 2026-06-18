@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDropzone } from "react-dropzone";
 import { FileUp, File, Trash2, ChevronRight, Activity, ArrowLeft } from "lucide-react";
@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import VoiceInput from "@/components/VoiceInput";
 import AgentProgressBar from "@/components/AgentProgressBar";
 import { AgentStep } from "@/types";
+import { supabaseBrowser } from "@/lib/supabase/client";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -16,6 +17,17 @@ export default function UploadPage() {
   const [transcript, setTranscript] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentStep, setCurrentStep] = useState<AgentStep>("extracting");
+  const [patientId, setPatientId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      const { data: { user } } = await supabaseBrowser.auth.getUser();
+      if (user) {
+        setPatientId(user.id);
+      }
+    };
+    fetchSession();
+  }, []);
 
   // Handle file drop
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -35,7 +47,6 @@ export default function UploadPage() {
   };
 
   const handleAnalyze = async () => {
-    const patientId = localStorage.getItem("vitaltrace_patient_id");
     if (!patientId) {
       alert("No patient session found. Please refresh and try again.");
       return;
@@ -117,6 +128,7 @@ export default function UploadPage() {
       const reports = reportsJson ? JSON.parse(reportsJson) : [];
       const summaryItem = {
         id: reportId,
+        patientId,
         uploadedAt: fullReport.uploadedAt,
         reportDate,
         fileName: fullReport.fileName,
