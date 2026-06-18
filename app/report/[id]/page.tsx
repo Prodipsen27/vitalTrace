@@ -252,9 +252,8 @@ export default function ReportPage() {
       {
         loading: "Generating PDF file...",
         success: "PDF downloaded successfully!",
-        error: "Failed to download PDF.",
       }
-    }
+    );
   };
 
   const handleLogout = async () => {
