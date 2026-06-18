@@ -2,6 +2,9 @@
 const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['pdf-parse'],
+    outputFileTracingIncludes: {
+      '/api/analyze': ['./node_modules/pdf-parse/**/*'],
+    },
   },
   webpack: (config, { isServer }) => {
     if (isServer) {
