@@ -24,9 +24,9 @@ export const nvidiaClient = new OpenAI({
 // 2. Define Model Constants
 export const MODELS = {
   EXTRACTOR: "nvidia/nemotron-3-ultra-550b-a55b", // Nvidia
-  ANALYZER: "llama-3.3-70b-specdec",                   // Groq
+  ANALYZER: "llama-3.3-70b-versatile",                 // Groq
   PATTERN: "gpt-4o",                                   // GitHub Models
-  EMBED: "text-embedding-3-small",                     // GitHub Models (Embeddings)
+  EMBED: "models/gemini-embedding-2",                  // Gemini
 } as const;
 
 // 3. Helper to wrap a client's chat.completions.create with transparent 429 retry logic
@@ -78,9 +78,9 @@ decorateChatClient(geminiClient, "Gemini");
 decorateChatClient(groqClient, "Groq");
 decorateChatClient(nvidiaClient, "Nvidia");
 
-// 4. Decorate embeddings client (specifically for githubClient)
-const originalEmbed = githubClient.embeddings.create.bind(githubClient.embeddings);
-githubClient.embeddings.create = async function (body: any, options: any) {
+// 4. Decorate embeddings client (specifically for geminiClient)
+const originalEmbed = geminiClient.embeddings.create.bind(geminiClient.embeddings);
+geminiClient.embeddings.create = async function (body: any, options: any) {
   let attempts = 0;
   const maxAttempts = 5;
   const baseDelay = 2000;
@@ -98,7 +98,7 @@ githubClient.embeddings.create = async function (body: any, options: any) {
 
       if (isRateLimit && attempts < maxAttempts) {
         const msg = error.message || (error.error && error.error.message) || JSON.stringify(error);
-        console.warn(`[GitHubModels] 429 Rate Limit hit on embeddings (attempt ${attempts}/${maxAttempts}): ${msg}`);
+        console.warn(`[Gemini] 429 Rate Limit hit on embeddings (attempt ${attempts}/${maxAttempts}): ${msg}`);
 
         let waitTimeMs = baseDelay;
         const match = msg.match(/wait (\d+) seconds/i);
@@ -109,12 +109,12 @@ githubClient.embeddings.create = async function (body: any, options: any) {
           waitTimeMs = baseDelay * Math.pow(2, attempts) + Math.random() * 1000;
         }
 
-        console.log(`[GitHubModels] Backing off for ${waitTimeMs / 1000}s...`);
+        console.log(`[Gemini] Backing off for ${waitTimeMs / 1000}s...`);
         await new Promise((resolve) => setTimeout(resolve, waitTimeMs));
         continue;
       }
       throw error;
     }
   }
-  throw new Error("Max retry attempts reached for GitHub Models Embeddings API");
+  throw new Error("Max retry attempts reached for Gemini Embeddings API");
 } as any;
