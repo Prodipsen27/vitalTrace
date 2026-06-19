@@ -21,6 +21,9 @@ export const metadata: Metadata = {
   description: "AI-powered clinical biomarker extraction, pattern detection, and personalized health recommendations.",
 };
 
+import { AnalysisProvider } from "@/lib/context/AnalysisContext";
+import GlobalAnalysisBanner from "@/components/GlobalAnalysisBanner";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,7 +35,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${instrumentSerif.variable} font-sans antialiased bg-[#080c0a] text-zinc-100 min-h-screen selection:bg-[#3ddc84]/30 selection:text-[#3ddc84]`}
       >
         <div className="noise-overlay pointer-events-none fixed inset-0 z-50 opacity-[0.015]" />
-        {children}
+        <AnalysisProvider>
+          {children}
+          <GlobalAnalysisBanner />
+        </AnalysisProvider>
       </body>
     </html>
   );
