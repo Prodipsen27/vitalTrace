@@ -16,12 +16,17 @@ export const groqClient = new OpenAI({
   apiKey: process.env.GROQ_API_KEY || "dummy", // Fallback to prevent startup crashes if key is empty initially
 });
 
+export const nvidiaClient = new OpenAI({
+  baseURL: "https://integrate.api.nvidia.com/v1",
+  apiKey: process.env.NVIDIA_API_KEY || "dummy",
+});
+
 // 2. Define Model Constants
 export const MODELS = {
-  EXTRACTOR: "gemini-1.5-flash",        // Gemini
-  ANALYZER: "llama-3.3-70b-specdec",    // Groq
-  PATTERN: "gpt-4o",                    // GitHub Models
-  EMBED: "text-embedding-3-small",      // GitHub Models (Embeddings)
+  EXTRACTOR: "nvidia/llama-3.1-nemotron-70b-instruct", // Nvidia
+  ANALYZER: "llama-3.3-70b-specdec",                   // Groq
+  PATTERN: "gpt-4o",                                   // GitHub Models
+  EMBED: "text-embedding-3-small",                     // GitHub Models (Embeddings)
 } as const;
 
 // 3. Helper to wrap a client's chat.completions.create with transparent 429 retry logic
@@ -71,6 +76,7 @@ function decorateChatClient(client: OpenAI, providerName: string) {
 decorateChatClient(githubClient, "GitHubModels");
 decorateChatClient(geminiClient, "Gemini");
 decorateChatClient(groqClient, "Groq");
+decorateChatClient(nvidiaClient, "Nvidia");
 
 // 4. Decorate embeddings client (specifically for githubClient)
 const originalEmbed = githubClient.embeddings.create.bind(githubClient.embeddings);
