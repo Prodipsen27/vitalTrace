@@ -23,7 +23,7 @@ export const nvidiaClient = new OpenAI({
 
 // 2. Define Model Constants
 export const MODELS = {
-  EXTRACTOR: "nvidia/llama-3.1-nemotron-70b-instruct", // Nvidia
+  EXTRACTOR: "nvidia/nemotron-3-ultra-550b-a55b", // Nvidia
   ANALYZER: "llama-3.3-70b-specdec",                   // Groq
   PATTERN: "gpt-4o",                                   // GitHub Models
   EMBED: "text-embedding-3-small",                     // GitHub Models (Embeddings)

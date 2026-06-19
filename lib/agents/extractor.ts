@@ -115,9 +115,13 @@ Always call the extract_biomarkers tool with your findings.`,
       model: MODELS.EXTRACTOR,
       messages,
       tools: [EXTRACT_TOOL],
-      tool_choice: "required", // Force the LLM to use a tool — no free text
-      max_tokens: 4096,
-    });
+      tool_choice: "required",
+      temperature: 1,
+      top_p: 0.95,
+      max_tokens: 16384,
+      reasoning_budget: 4096, // 4096 is optimal for thorough clinical data extraction
+      chat_template_kwargs: { enable_thinking: true }
+    } as any);
 
     const message = response.choices[0].message;
     const stopReason = response.choices[0].finish_reason;
