@@ -1,4 +1,4 @@
-import { githubClient, MODELS } from "@/lib/github-models";
+import { geminiClient, MODELS } from "@/lib/github-models";
 import { Biomarker, AgentState } from "@/types";
 
 // ─────────────────────────────────────────────
@@ -111,7 +111,7 @@ Always call the extract_biomarkers tool with your findings.`,
     iterations++;
     console.log(`🔄 [ExtractorAgent] Loop iteration ${iterations}`);
 
-    const response = await githubClient.chat.completions.create({
+    const response = await geminiClient.chat.completions.create({
       model: MODELS.EXTRACTOR,
       messages,
       tools: [EXTRACT_TOOL],

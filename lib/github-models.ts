@@ -1,61 +1,78 @@
 import OpenAI from "openai";
 
-// One client, used by all agents
-// Model-agnostic — swap model name anywhere without changing this file
+// 1. Initialize Clients for each Provider
 export const githubClient = new OpenAI({
   baseURL: "https://models.inference.ai.azure.com",
   apiKey: process.env.GITHUB_TOKEN!,
 });
 
-// Models available to us for free - mapped per-agent to bypass the 1req/60s rate limit on any single model
+export const geminiClient = new OpenAI({
+  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+  apiKey: process.env.GOOGLE_API_KEY!,
+});
+
+export const groqClient = new OpenAI({
+  baseURL: "https://api.groq.com/openai/v1",
+  apiKey: process.env.GROQ_API_KEY || "dummy", // Fallback to prevent startup crashes if key is empty initially
+});
+
+// 2. Define Model Constants
 export const MODELS = {
-  EXTRACTOR: "gpt-4o-mini",        // High limits, fast, excellent at structured data extraction
-  ANALYZER: "DeepSeek-V3-0324",     // Detailed clinical reasoning and diagnostics
-  PATTERN: "gpt-4o",               // Excellent tool-use capability for history trend mapping
-  EMBED: "text-embedding-3-small",  // For RAG embeddings
+  EXTRACTOR: "gemini-1.5-flash",        // Gemini
+  ANALYZER: "llama-3.3-70b-specdec",    // Groq
+  PATTERN: "gpt-4o",                    // GitHub Models
+  EMBED: "text-embedding-3-small",      // GitHub Models (Embeddings)
 } as const;
 
-// ── Transparent Retry Decorator for Rate Limits (429) ──
-const originalCreate = githubClient.chat.completions.create.bind(githubClient.chat.completions);
-githubClient.chat.completions.create = async function (body: any, options: any) {
-  let attempts = 0;
-  const maxAttempts = 5;
-  const baseDelay = 2000;
+// 3. Helper to wrap a client's chat.completions.create with transparent 429 retry logic
+function decorateChatClient(client: OpenAI, providerName: string) {
+  const originalCreate = client.chat.completions.create.bind(client.chat.completions);
+  client.chat.completions.create = async function (body: any, options: any) {
+    let attempts = 0;
+    const maxAttempts = 5;
+    const baseDelay = 2000;
 
-  while (attempts < maxAttempts) {
-    try {
-      return await originalCreate(body, options);
-    } catch (error: any) {
-      attempts++;
-      const isRateLimit =
-        error.status === 429 ||
-        (error.message && error.message.includes("429")) ||
-        (error.message && error.message.includes("Rate limit")) ||
-        JSON.stringify(error).includes("429");
+    while (attempts < maxAttempts) {
+      try {
+        return await originalCreate(body, options);
+      } catch (error: any) {
+        attempts++;
+        const isRateLimit =
+          error.status === 429 ||
+          (error.message && error.message.includes("429")) ||
+          (error.message && error.message.includes("Rate limit")) ||
+          JSON.stringify(error).includes("429");
 
-      if (isRateLimit && attempts < maxAttempts) {
-        const msg = error.message || (error.error && error.error.message) || JSON.stringify(error);
-        console.warn(`[GitHubModels] 429 Rate Limit hit (attempt ${attempts}/${maxAttempts}): ${msg}`);
-        
-        let waitTimeMs = baseDelay;
-        const match = msg.match(/wait (\d+) seconds/i);
-        if (match && match[1]) {
-          const seconds = parseInt(match[1], 10);
-          waitTimeMs = (seconds + 1) * 1000;
-        } else {
-          waitTimeMs = baseDelay * Math.pow(2, attempts) + Math.random() * 1000;
+        if (isRateLimit && attempts < maxAttempts) {
+          const msg = error.message || (error.error && error.error.message) || JSON.stringify(error);
+          console.warn(`[${providerName}] 429 Rate Limit hit (attempt ${attempts}/${maxAttempts}): ${msg}`);
+          
+          let waitTimeMs = baseDelay;
+          const match = msg.match(/wait (\d+) seconds/i);
+          if (match && match[1]) {
+            const seconds = parseInt(match[1], 10);
+            waitTimeMs = (seconds + 1) * 1000;
+          } else {
+            waitTimeMs = baseDelay * Math.pow(2, attempts) + Math.random() * 1000;
+          }
+
+          console.log(`[${providerName}] Backing off for ${waitTimeMs / 1000}s...`);
+          await new Promise((resolve) => setTimeout(resolve, waitTimeMs));
+          continue;
         }
-
-        console.log(`[GitHubModels] Backing off for ${waitTimeMs / 1000}s...`);
-        await new Promise((resolve) => setTimeout(resolve, waitTimeMs));
-        continue;
+        throw error;
       }
-      throw error;
     }
-  }
-  throw new Error("Max retry attempts reached for GitHub Models API");
-} as any;
+    throw new Error(`Max retry attempts reached for ${providerName} API`);
+  } as any;
+}
 
+// Decorate the chat clients
+decorateChatClient(githubClient, "GitHubModels");
+decorateChatClient(geminiClient, "Gemini");
+decorateChatClient(groqClient, "Groq");
+
+// 4. Decorate embeddings client (specifically for githubClient)
 const originalEmbed = githubClient.embeddings.create.bind(githubClient.embeddings);
 githubClient.embeddings.create = async function (body: any, options: any) {
   let attempts = 0;
@@ -94,4 +111,4 @@ githubClient.embeddings.create = async function (body: any, options: any) {
     }
   }
   throw new Error("Max retry attempts reached for GitHub Models Embeddings API");
-} as any;
+} as any;

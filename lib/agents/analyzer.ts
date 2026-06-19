@@ -1,4 +1,4 @@
-import { githubClient, MODELS } from "@/lib/github-models";
+import { groqClient, MODELS } from "@/lib/github-models";
 import { AgentState, LifestyleRecommendation } from "@/types";
 
 // ─────────────────────────────────────────────
@@ -187,7 +187,7 @@ First call analyze_findings, then call generate_lifestyle_recommendations.`,
     iterations++;
     console.log(`🔄 [AnalyzerAgent] Iteration ${iterations}, tools done: ${toolsCompleted}/2`);
 
-    const response = await githubClient.chat.completions.create({
+    const response = await groqClient.chat.completions.create({
       model: MODELS.ANALYZER,
       messages,
       tools: [ANALYZE_TOOL, LIFESTYLE_TOOL],
