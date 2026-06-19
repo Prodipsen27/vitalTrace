@@ -118,9 +118,7 @@ Always call the extract_biomarkers tool with your findings.`,
       tool_choice: "required",
       temperature: 1,
       top_p: 0.95,
-      max_tokens: 16384,
-      reasoning_budget: 4096, // 4096 is optimal for thorough clinical data extraction
-      chat_template_kwargs: { enable_thinking: true }
+      max_tokens: 4096,
     } as any);
 
     const message = response.choices[0].message;
