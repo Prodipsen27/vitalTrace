@@ -14,6 +14,7 @@ export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [transcript, setTranscript] = useState("");
   const [patientId, setPatientId] = useState<string | null>(null);
+  const [patientName, setPatientName] = useState("");
   const { isAnalyzing, startAnalysis } = useAnalysis();
 
   useEffect(() => {
@@ -21,6 +22,7 @@ export default function UploadPage() {
       const { data: { user } } = await supabaseBrowser.auth.getUser();
       if (user) {
         setPatientId(user.id);
+        setPatientName(user.user_metadata?.full_name || "");
       }
     };
     fetchSession();
@@ -60,7 +62,12 @@ export default function UploadPage() {
       return;
     }
 
-    await startAnalysis(file, transcript, patientId);
+    if (!patientName.trim()) {
+      alert("Please enter a patient name.");
+      return;
+    }
+
+    await startAnalysis(file, transcript, patientId, patientName);
   };
 
   const handleLogout = async () => {
@@ -111,6 +118,20 @@ export default function UploadPage() {
         </div>
 
         <div className="space-y-8">
+          {/* Patient Name Input */}
+          <div className="glass-card rounded-xl p-5 border border-[#2d4a3b]/60 bg-[#1a2a22]/10 max-w-md mx-auto space-y-2">
+            <label className="text-xs uppercase font-extrabold tracking-wider text-zinc-400 block text-center">
+              Patient Name
+            </label>
+            <input
+              type="text"
+              value={patientName}
+              onChange={(e) => setPatientName(e.target.value)}
+              placeholder="Enter patient name"
+              className="w-full bg-[#080c0a] border border-[#2d4a3b]/60 focus:border-[#3ddc84] p-3 rounded-lg text-sm text-zinc-100 text-center transition-colors placeholder-zinc-600 outline-none"
+            />
+          </div>
+
               {/* Columns */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Method 1: PDF Dropzone */}

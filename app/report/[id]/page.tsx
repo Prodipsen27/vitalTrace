@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import {
   ArrowLeft,
@@ -22,6 +22,7 @@ import {
   Calendar,
   AlertTriangle,
   History,
+  X,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import StatusBadge from "@/components/StatusBadge";
@@ -37,16 +38,34 @@ export default function ReportPage() {
   const [activeTab, setActiveTab] = useState<"all" | "abnormal" | "critical">("all");
   const [copiedQuestionIdx, setCopiedQuestionIdx] = useState<number | null>(null);
 
+  // Email modal configuration
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
+  const [nameInput, setNameInput] = useState("");
+
   useEffect(() => {
-    if (typeof window !== "undefined" && id) {
-      const data = localStorage.getItem(`vitaltrace_report_${id}`);
-      if (data) {
-        setReport(JSON.parse(data));
-      } else {
-        toast.error("Report not found");
-        router.push("/history");
+    const fetchData = async () => {
+      if (typeof window !== "undefined" && id) {
+        const data = localStorage.getItem(`vitaltrace_report_${id}`);
+        if (data) {
+          setReport(JSON.parse(data));
+        } else {
+          toast.error("Report not found");
+          router.push("/history");
+        }
       }
-    }
+
+      try {
+        const { data: { user } } = await supabaseBrowser.auth.getUser();
+        if (user) {
+          setEmailInput(user.email || "");
+          setNameInput(user.user_metadata?.full_name || "");
+        }
+      } catch (authErr) {
+        console.error("Error retrieving user details:", authErr);
+      }
+    };
+    fetchData();
   }, [id, router]);
 
   if (!report) {
@@ -104,13 +123,43 @@ export default function ReportPage() {
     toast.success("All questions copied to clipboard!");
   };
 
-  const sendEmail = () => {
+  const sendEmail = async () => {
+    if (!emailInput) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
     toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1500)),
+      (async () => {
+        const response = await fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: emailInput,
+            patientName: nameInput,
+            report: report,
+          }),
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || "Email delivery failed");
+        }
+
+        // Update user full name metadata if customized in modal
+        if (nameInput) {
+          try {
+            await supabaseBrowser.auth.updateUser({ data: { full_name: nameInput } });
+          } catch (metaErr) {
+            console.error("Failed to sync name metadata:", metaErr);
+          }
+        }
+        setIsEmailModalOpen(false);
+      })(),
       {
-        loading: "Preparing medical brief email...",
-        success: "Report briefing sent to your registered email!",
-        error: "Failed to send email. Please try again.",
+        loading: "Sending medical brief email...",
+        success: "Report briefing sent successfully!",
+        error: (err) => err.message || "Failed to send email.",
       }
     );
   };
@@ -264,6 +313,55 @@ export default function ReportPage() {
   return (
     <main className="min-h-screen bg-[#080c0a] text-zinc-100 pb-28 pt-8 px-6 relative">
       <Toaster position="top-right" toastOptions={{ style: { background: "#1a2a22", color: "#f4f4f5", border: "1px solid #2d4a3b" } }} />
+
+      {/* Email Modal */}
+      <AnimatePresence>
+        {isEmailModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-[#1a2a22] border border-[#2d4a3b] p-8 rounded-2xl max-w-md w-full space-y-6"
+            >
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-heading text-zinc-100">Send Report Briefing</h3>
+                <button onClick={() => setIsEmailModalOpen(false)}>
+                  <X className="w-5 h-5 text-zinc-500" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs uppercase font-extrabold tracking-wider text-zinc-400 block mb-1">Patient Name</label>
+                  <input
+                    type="text"
+                    placeholder="Patient Name"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    className="w-full bg-[#080c0a] border border-[#2d4a3b] p-3 rounded-lg text-sm text-zinc-200 outline-none focus:border-[#3ddc84]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs uppercase font-extrabold tracking-wider text-zinc-400 block mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    placeholder="Email Address"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    className="w-full bg-[#080c0a] border border-[#2d4a3b] p-3 rounded-lg text-sm text-zinc-200 outline-none focus:border-[#3ddc84]"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={sendEmail}
+                className="w-full bg-[#3ddc84] text-[#080c0a] font-bold py-3 rounded-lg hover:bg-[#4ef096] transition-colors"
+              >
+                Confirm & Send
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Decorative Blur */}
       <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-500/5 blur-[120px] pointer-events-none" />
@@ -558,7 +656,7 @@ export default function ReportPage() {
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={sendEmail}
+              onClick={() => setIsEmailModalOpen(true)}
               className="flex items-center gap-2 bg-[#1a2a22]/40 border border-[#2d4a3b]/80 text-zinc-300 font-semibold text-xs uppercase tracking-wider px-5 py-3 rounded-full hover:border-[#3ddc84] hover:text-zinc-100 transition-colors"
             >
               <Mail className="w-4 h-4 text-[#3ddc84]" />

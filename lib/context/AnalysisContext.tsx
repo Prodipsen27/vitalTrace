@@ -4,12 +4,14 @@ import React, { createContext, useContext, useState, useRef, useEffect } from "r
 import { useRouter } from "next/navigation";
 import { AgentStep } from "@/types";
 
+import { supabaseBrowser } from "@/lib/supabase/client";
+
 interface AnalysisContextType {
   isAnalyzing: boolean;
   currentStep: AgentStep;
   error: string | null;
   activeReportId: string | null;
-  startAnalysis: (file: File | null, transcript: string, patientId: string) => Promise<void>;
+  startAnalysis: (file: File | null, transcript: string, patientId: string, patientName?: string) => Promise<void>;
   cancelAnalysis: () => void;
 }
 
@@ -46,7 +48,7 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     router.push("/upload");
   };
 
-  const startAnalysis = async (file: File | null, transcript: string, patientId: string) => {
+  const startAnalysis = async (file: File | null, transcript: string, patientId: string, patientName?: string) => {
     setIsAnalyzing(true);
     setCurrentStep("extracting");
     setError(null);
@@ -54,6 +56,15 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
+
+    // Update patient name metadata in Supabase if provided
+    if (patientName) {
+      try {
+        await supabaseBrowser.auth.updateUser({ data: { full_name: patientName } });
+      } catch (metaErr) {
+        console.error("Failed to update patient name metadata:", metaErr);
+      }
+    }
 
     // Redirect to the processing page immediately
     router.push("/processing");
